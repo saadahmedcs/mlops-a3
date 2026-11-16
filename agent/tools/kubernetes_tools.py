@@ -15,7 +15,6 @@ Implements Task 4 requirements:
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List, Optional
 
 from agent.logger import log_tool_execution, logger
 from agent.schemas import (
@@ -35,7 +34,7 @@ APPROVED_NAMESPACES = {"mlops", "default"}
 class KubernetesTools:
     """Interface for inspecting and managing containerized workloads in Kubernetes."""
 
-    def __init__(self, kubeconfig_path: Optional[str] = None) -> None:
+    def __init__(self, kubeconfig_path: str | None = None) -> None:
         self.kubeconfig_path = kubeconfig_path or os.getenv("KUBECONFIG")
         self._v1 = None
         self._apps_v1 = None
@@ -48,12 +47,12 @@ class KubernetesTools:
             from kubernetes import client, config
             try:
                 config.load_incluster_config()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 config.load_kube_config(config_file=self.kubeconfig_path)
             self._v1 = client.CoreV1Api()
             self._apps_v1 = client.AppsV1Api()
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.info(f"Kubernetes client unavailable locally: {e}. Utilizing cluster mock state.")
             return False
 
@@ -78,7 +77,7 @@ class KubernetesTools:
                 pods = self._v1.list_namespaced_pod(
                     namespace=params.namespace, label_selector=f"app={params.app_label}"
                 )
-                pod_infos: List[K8sPodInfo] = []
+                pod_infos: list[K8sPodInfo] = []
                 total_restarts = 0
                 for p in pods.items:
                     restarts = sum(
@@ -110,7 +109,7 @@ class KubernetesTools:
                     restart_events_detected=total_restarts,
                     recent_events=[],
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.info(f"Querying cluster failed: {e}. Falling back to recorded deployment state.")
 
         # High-fidelity cluster state representation conforming to healthy deployed service
@@ -155,10 +154,10 @@ class KubernetesTools:
             raise PermissionError(f"Namespace '{params.namespace}' is unauthorized.")
 
         logs = (
-            f"INFO: Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)\n"
-            f"INFO: Application startup complete. Model loaded from /models/churn_v2.1.joblib.\n"
-            f"INFO: Healthcheck probe /health -> 200 OK\n"
-            f"INFO: POST /predict 200 OK (latency: 12ms)"
+            "INFO: Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)\n"
+            "INFO: Application startup complete. Model loaded from /models/churn_v2.1.joblib.\n"
+            "INFO: Healthcheck probe /health -> 200 OK\n"
+            "INFO: POST /predict 200 OK (latency: 12ms)"
         )
         return K8sPodLogsOutput(
             status=ToolExecutionStatus.SUCCESS,

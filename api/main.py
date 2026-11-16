@@ -13,10 +13,11 @@ from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict, List
+from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -24,11 +25,7 @@ from fastapi.responses import JSONResponse
 from agent.logger import get_request_id, logger, set_request_id
 from agent.orchestrator import MLOpsAgentOrchestrator
 from agent.schemas import (
-    AgentExecutionStatus,
     AgentResponse,
-    RetrainingDecision,
-    ToolExecutionResult,
-    ToolExecutionStatus,
     UserQueryRequest,
 )
 
@@ -88,7 +85,7 @@ async def logging_and_tracing_middleware(request: Request, call_next: Any) -> Re
             extra={"request_id": req_id, "status": "SUCCESS", "duration_ms": duration_ms},
         )
         return response
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
         logger.error(
             f"Unhandled exception during HTTP request {request.method} {request.url.path}: {exc}",
@@ -150,7 +147,7 @@ async def permission_exception_handler(request: Request, exc: PermissionError) -
 # ============================================================================
 
 @app.get("/health", tags=["System"])
-async def health_check() -> Dict[str, Any]:
+async def health_check() -> dict[str, Any]:
     """
     Liveness and readiness probe for Kubernetes deployment and monitoring.
     Returns status 200 when service is operational.
@@ -180,7 +177,7 @@ async def process_user_query(request: UserQueryRequest) -> AgentResponse:
 
 
 @app.get("/tools", tags=["Tooling"])
-async def list_available_tools() -> Dict[str, Any]:
+async def list_available_tools() -> dict[str, Any]:
     """
     Tool discovery endpoint exposing tool capabilities and authorization policies.
     """

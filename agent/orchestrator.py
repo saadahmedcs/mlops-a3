@@ -15,16 +15,14 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import Any, Dict, List, Optional
 
-from agent.logger import get_request_id, logger, set_request_id
+from agent.logger import logger, set_request_id
 from agent.schemas import (
     AgentExecutionStatus,
     AgentResponse,
     AirflowDagStatusInput,
     DeploymentEvidence,
     DiagnosisEvidence,
-    DiagnosisLayer,
     DvcInspectInput,
     K8sInspectDeploymentInput,
     MetricEvidence,
@@ -32,7 +30,6 @@ from agent.schemas import (
     ProvenanceEvidence,
     RetrainingDecision,
     ToolExecutionResult,
-    ToolExecutionStatus,
     UserQueryRequest,
 )
 from agent.tools.airflow_tools import AirflowTools
@@ -49,10 +46,10 @@ class MLOpsAgentOrchestrator:
 
     def __init__(
         self,
-        dvc_tools: Optional[DvcTools] = None,
-        mlflow_tools: Optional[MlflowTools] = None,
-        airflow_tools: Optional[AirflowTools] = None,
-        k8s_tools: Optional[KubernetesTools] = None,
+        dvc_tools: DvcTools | None = None,
+        mlflow_tools: MlflowTools | None = None,
+        airflow_tools: AirflowTools | None = None,
+        k8s_tools: KubernetesTools | None = None,
     ) -> None:
         self.dvc = dvc_tools or DvcTools()
         self.mlflow = mlflow_tools or MlflowTools()
@@ -72,18 +69,18 @@ class MLOpsAgentOrchestrator:
             extra={"request_id": req_id, "status": "PROCESSING"},
         )
 
-        tool_executions: List[ToolExecutionResult] = []
-        facts: List[str] = []
-        uncertainties: List[str] = []
-        recommendations: List[str] = []
+        tool_executions: list[ToolExecutionResult] = []
+        facts: list[str] = []
+        uncertainties: list[str] = []
+        recommendations: list[str] = []
 
-        provenance_evidence: Optional[ProvenanceEvidence] = None
-        metric_evidence_list: List[MetricEvidence] = []
-        deployment_evidence: Optional[DeploymentEvidence] = None
-        diagnosis_evidence: Optional[DiagnosisEvidence] = None
+        provenance_evidence: ProvenanceEvidence | None = None
+        metric_evidence_list: list[MetricEvidence] = []
+        deployment_evidence: DeploymentEvidence | None = None
+        diagnosis_evidence: DiagnosisEvidence | None = None
 
         retraining_decision = RetrainingDecision.NOT_RECOMMENDED
-        retraining_reason: Optional[str] = None
+        retraining_reason: str | None = None
 
         query_lower = request.query.lower()
 
@@ -312,7 +309,7 @@ class MLOpsAgentOrchestrator:
             )
             return response
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             total_ms = round((time.perf_counter() - start_time) * 1000, 2)
             logger.error(
                 f"Orchestrator failed to process query: {e}",
@@ -322,12 +319,12 @@ class MLOpsAgentOrchestrator:
                 query=request.query,
                 request_id=req_id,
                 status=AgentExecutionStatus.FAILED,
-                summary=f"Failed to execute agent workflow: {str(e)}",
+                summary=f"Failed to execute agent workflow: {e!s}",
                 facts=facts,
                 uncertainties=["Execution was interrupted due to an unexpected error."],
                 recommendations=["Check service connectivity and tool configurations."],
                 retraining_decision=RetrainingDecision.INSUFFICIENT_EVIDENCE,
-                retraining_reason=f"Operation failed: {str(e)}",
+                retraining_reason=f"Operation failed: {e!s}",
                 tool_executions=tool_executions,
                 total_duration_ms=total_ms,
             )

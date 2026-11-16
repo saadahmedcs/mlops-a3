@@ -12,9 +12,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import time
-from typing import Any, Dict
+from typing import Any
 
 
 def train(
@@ -24,7 +23,7 @@ def train(
     learning_rate: float = 0.05,
     n_estimators: int = 200,
     max_depth: int = 6,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     print(f"[+] Loading dataset from '{data_path}' (DVC version: {dataset_version})...")
     # Simulate data loading & validation
     time.sleep(0.1)
@@ -65,7 +64,7 @@ def train(
             mlflow.log_metrics(metrics)
             mlflow.set_tags(tags)
             print(f"[+] Logged run {run.info.run_id} to MLflow experiment '{experiment_name}'.")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"[*] Note: MLflow tracking server offline ({e}). Metrics recorded locally.")
 
     print(f"[+] Training completed successfully. Metrics: {json.dumps(metrics)}")
