@@ -1,0 +1,4 @@
+[core]
+    remote = s3-production
+['remote "s3-production"']
+    url = s3://mlops-production-dvc-store/datasets
