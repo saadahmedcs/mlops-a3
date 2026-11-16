@@ -4,7 +4,6 @@ Unit tests for the FastAPI interface endpoints and middleware.
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 

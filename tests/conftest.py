@@ -7,12 +7,12 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from api.main import app
 from agent.orchestrator import MLOpsAgentOrchestrator
 from agent.tools.airflow_tools import AirflowTools
 from agent.tools.dvc_tools import DvcTools
 from agent.tools.kubernetes_tools import KubernetesTools
 from agent.tools.mlflow_tools import MlflowTools
+from api.main import app
 
 
 @pytest.fixture

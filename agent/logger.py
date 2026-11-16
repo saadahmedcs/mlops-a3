@@ -16,8 +16,9 @@ import logging
 import re
 import sys
 import time
+from collections.abc import Callable
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Optional, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 # Context variable to correlate logs with an incoming request
 current_request_id: contextvars.ContextVar[str] = contextvars.ContextVar(
@@ -60,7 +61,7 @@ def redact_secrets(content: Any) -> Any:
                 masked = pattern.sub(r"\1=[REDACTED]", masked)
         return masked
     elif isinstance(content, dict):
-        sanitized: Dict[str, Any] = {}
+        sanitized: dict[str, Any] = {}
         for key, value in content.items():
             key_lower = str(key).lower()
             if any(term in key_lower for term in ("pass", "secret", "token", "key", "auth", "credential")):
@@ -80,7 +81,7 @@ class StructuredJsonFormatter(logging.Formatter):
     """
 
     def format(self, record: logging.LogRecord) -> str:
-        log_payload: Dict[str, Any] = {
+        log_payload: dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,

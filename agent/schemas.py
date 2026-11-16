@@ -11,9 +11,9 @@ Defines type-safe models for:
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field, field_validator
+from typing import Any
 
+from pydantic import BaseModel, Field, field_validator
 
 # ============================================================================
 # Enums
@@ -62,11 +62,11 @@ class UserQueryRequest(BaseModel):
         min_length=3,
         examples=["Find the best recent model, identify the dataset version used to train it, check deployment status, and explain whether retraining is necessary."]
     )
-    request_id: Optional[str] = Field(
+    request_id: str | None = Field(
         None,
         description="Unique request tracing identifier. Automatically generated if omitted."
     )
-    conversation_id: Optional[str] = Field(
+    conversation_id: str | None = Field(
         None,
         description="Identifier correlating multiple conversational turns."
     )
@@ -98,23 +98,23 @@ class UserQueryRequest(BaseModel):
 class DvcDatasetInfo(BaseModel):
     """Provenance details for a DVC-tracked dataset."""
     path: str = Field(..., description="Path to data file or directory")
-    version_tag: Optional[str] = Field(None, description="Semantic or release version tag (e.g. v2.1)")
+    version_tag: str | None = Field(None, description="Semantic or release version tag (e.g. v2.1)")
     git_commit: str = Field(..., description="Associated Git commit SHA")
-    remote_url: Optional[str] = Field(None, description="Configured DVC remote storage URL")
-    md5_hash: Optional[str] = Field(None, description="DVC content hash")
+    remote_url: str | None = Field(None, description="Configured DVC remote storage URL")
+    md5_hash: str | None = Field(None, description="DVC content hash")
 
 
 class DvcInspectInput(BaseModel):
     """Input parameters for inspecting DVC-tracked datasets."""
     repo_path: str = Field(".", description="Path to git/dvc repository")
-    target_path: Optional[str] = Field(None, description="Specific dataset file or folder to inspect")
+    target_path: str | None = Field(None, description="Specific dataset file or folder to inspect")
 
 
 class DvcInspectOutput(BaseModel):
     """Output from DVC dataset inspection."""
     status: ToolExecutionStatus
     current_commit: str = Field(..., description="Current Git HEAD commit SHA")
-    tracked_datasets: List[DvcDatasetInfo] = Field(default_factory=list)
+    tracked_datasets: list[DvcDatasetInfo] = Field(default_factory=list)
     has_uncommitted_changes: bool = Field(False, description="Whether tracked data differs from workspace")
     message: str
 
@@ -123,23 +123,23 @@ class DvcDiffInput(BaseModel):
     """Input for comparing DVC dataset versions across revisions."""
     rev_a: str = Field(..., description="Baseline Git commit or tag")
     rev_b: str = Field("HEAD", description="Comparison Git commit or tag")
-    target_path: Optional[str] = Field(None, description="Specific path to compare")
+    target_path: str | None = Field(None, description="Specific path to compare")
 
 
 class DvcDiffOutput(BaseModel):
     """Output from comparing two DVC data revisions."""
     status: ToolExecutionStatus
     has_changed: bool
-    added_files: List[str] = Field(default_factory=list)
-    modified_files: List[str] = Field(default_factory=list)
-    deleted_files: List[str] = Field(default_factory=list)
+    added_files: list[str] = Field(default_factory=list)
+    modified_files: list[str] = Field(default_factory=list)
+    deleted_files: list[str] = Field(default_factory=list)
     summary: str
 
 
 class DvcReproduceInput(BaseModel):
     """Input for retrieving reproduction instructions or checking out a previous dataset."""
     git_commit: str = Field(..., description="Target Git commit hash to reproduce")
-    target_path: Optional[str] = Field(None, description="Optional target file/dir")
+    target_path: str | None = Field(None, description="Optional target file/dir")
 
 
 class DvcReproduceOutput(BaseModel):
@@ -161,12 +161,12 @@ class MlflowRunSummary(BaseModel):
     experiment_id: str
     experiment_name: str
     status: str
-    metrics: Dict[str, float] = Field(default_factory=dict)
-    params: Dict[str, str] = Field(default_factory=dict)
-    tags: Dict[str, str] = Field(default_factory=dict)
-    artifact_uri: Optional[str] = None
-    dataset_version: Optional[str] = Field(None, description="DVC dataset version recorded in tags/params")
-    git_commit: Optional[str] = Field(None, description="Git commit associated with training run")
+    metrics: dict[str, float] = Field(default_factory=dict)
+    params: dict[str, str] = Field(default_factory=dict)
+    tags: dict[str, str] = Field(default_factory=dict)
+    artifact_uri: str | None = None
+    dataset_version: str | None = Field(None, description="DVC dataset version recorded in tags/params")
+    git_commit: str | None = Field(None, description="Git commit associated with training run")
 
 
 class MlflowBestRunInput(BaseModel):
@@ -174,30 +174,30 @@ class MlflowBestRunInput(BaseModel):
     metric_name: str = Field("f1_score", description="Evaluation metric to optimize")
     higher_is_better: bool = Field(True, description="Whether higher values denote better performance")
     max_runs: int = Field(5, description="Number of recent runs to evaluate", ge=1, le=50)
-    experiment_name: Optional[str] = Field(None, description="Optional filter by experiment name")
+    experiment_name: str | None = Field(None, description="Optional filter by experiment name")
 
 
 class MlflowBestRunOutput(BaseModel):
     """Output identifying the best run with metrics and provenance references."""
     status: ToolExecutionStatus
-    best_run: Optional[MlflowRunSummary] = None
+    best_run: MlflowRunSummary | None = None
     evaluated_runs_count: int = 0
     metric_name: str
-    metric_value: Optional[float] = None
+    metric_value: float | None = None
     is_production_ready: bool = Field(False, description="Whether candidate satisfies production quality gate")
     selection_rationale: str
 
 
 class MlflowCompareInput(BaseModel):
     """Input for comparing multiple MLflow runs."""
-    run_ids: List[str] = Field(..., min_length=2, max_length=10)
-    metrics_to_compare: List[str] = Field(default_factory=lambda: ["f1_score", "accuracy", "loss"])
+    run_ids: list[str] = Field(..., min_length=2, max_length=10)
+    metrics_to_compare: list[str] = Field(default_factory=lambda: ["f1_score", "accuracy", "loss"])
 
 
 class MlflowCompareOutput(BaseModel):
     """Comparative analysis across multiple runs."""
     status: ToolExecutionStatus
-    comparison_matrix: List[Dict[str, Any]]
+    comparison_matrix: list[dict[str, Any]]
     recommendation: str
 
 
@@ -215,27 +215,27 @@ class AirflowDagStatusOutput(BaseModel):
     """Execution state of the target Airflow DAG."""
     status: ToolExecutionStatus
     dag_id: str
-    run_id: Optional[str] = None
+    run_id: str | None = None
     state: str = Field(..., description="DAG run state: success, failed, running, queued")
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    failed_tasks: List[str] = Field(default_factory=list)
-    task_states: Dict[str, str] = Field(default_factory=dict)
+    start_date: str | None = None
+    end_date: str | None = None
+    failed_tasks: list[str] = Field(default_factory=list)
+    task_states: dict[str, str] = Field(default_factory=dict)
     summary: str
 
 
 class AirflowTriggerDagInput(BaseModel):
     """Input for triggering an approved training DAG."""
     dag_id: str = Field("training_pipeline", description="Target DAG identifier")
-    conf: Dict[str, Any] = Field(default_factory=dict, description="Configuration parameters passed to DAG run")
+    conf: dict[str, Any] = Field(default_factory=dict, description="Configuration parameters passed to DAG run")
 
 
 class AirflowTriggerDagOutput(BaseModel):
     """Result of triggering a DAG run."""
     status: ToolExecutionStatus
     dag_id: str
-    dag_run_id: Optional[str] = None
-    execution_date: Optional[str] = None
+    dag_run_id: str | None = None
+    execution_date: str | None = None
     message: str
 
 
@@ -243,7 +243,7 @@ class AirflowTaskDiagnosticsInput(BaseModel):
     """Input for diagnosing a failed task in a DAG run."""
     dag_id: str = Field("training_pipeline", description="DAG identifier")
     task_id: str = Field(..., description="Failed task name (e.g. apply_model_quality_gate)")
-    dag_run_id: Optional[str] = Field(None, description="Specific run ID; latest run used if omitted")
+    dag_run_id: str | None = Field(None, description="Specific run ID; latest run used if omitted")
 
 
 class AirflowTaskDiagnosticsOutput(BaseModel):
@@ -269,7 +269,7 @@ class K8sPodInfo(BaseModel):
     ready: bool
     restart_count: int
     image: str
-    started_at: Optional[str] = None
+    started_at: str | None = None
 
 
 class K8sInspectDeploymentInput(BaseModel):
@@ -286,10 +286,10 @@ class K8sInspectDeploymentOutput(BaseModel):
     replicas_desired: int
     replicas_ready: int
     active_image_tag: str
-    pods: List[K8sPodInfo] = Field(default_factory=list)
+    pods: list[K8sPodInfo] = Field(default_factory=list)
     healthy: bool
     restart_events_detected: int = 0
-    recent_events: List[str] = Field(default_factory=list)
+    recent_events: list[str] = Field(default_factory=list)
 
 
 class K8sPodLogsInput(BaseModel):
@@ -304,7 +304,7 @@ class K8sPodLogsOutput(BaseModel):
     status: ToolExecutionStatus
     pod_name: str
     logs: str
-    error_patterns_found: List[str] = Field(default_factory=list)
+    error_patterns_found: list[str] = Field(default_factory=list)
 
 
 class K8sModifyClusterInput(BaseModel):
@@ -313,7 +313,7 @@ class K8sModifyClusterInput(BaseModel):
     target_resource: str = Field(..., description="Deployment or Pod name")
     namespace: str = Field("mlops", description="Target namespace (restricted to approved namespaces)")
     user_confirmed: bool = Field(False, description="Must be True for mutation to proceed")
-    parameters: Dict[str, Any] = Field(default_factory=dict)
+    parameters: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("namespace")
     @classmethod
@@ -339,7 +339,7 @@ class K8sModifyClusterOutput(BaseModel):
 class ToolCallRequest(BaseModel):
     """Structured tool invocation decision formulated by the agent."""
     tool_name: str = Field(..., description="Registered name of tool to invoke")
-    parameters: Dict[str, Any] = Field(default_factory=dict, description="Validated input parameters")
+    parameters: dict[str, Any] = Field(default_factory=dict, description="Validated input parameters")
     justification: str = Field(..., description="Reason this tool is required for user query")
 
 
@@ -349,8 +349,8 @@ class ToolExecutionResult(BaseModel):
     status: ToolExecutionStatus
     duration_ms: float
     request_id: str
-    data: Optional[Dict[str, Any]] = None
-    error_message: Optional[str] = None
+    data: dict[str, Any] | None = None
+    error_message: str | None = None
 
 
 class ProvenanceEvidence(BaseModel):
@@ -358,8 +358,8 @@ class ProvenanceEvidence(BaseModel):
     dataset_name: str
     dataset_version: str
     git_commit: str
-    dvc_remote: Optional[str] = None
-    tracked_files: List[str] = Field(default_factory=list)
+    dvc_remote: str | None = None
+    tracked_files: list[str] = Field(default_factory=list)
     is_reproducible: bool = True
 
 
@@ -370,9 +370,9 @@ class MetricEvidence(BaseModel):
     experiment_name: str
     primary_metric: str
     primary_value: float
-    metrics: Dict[str, float] = Field(default_factory=dict)
-    parameters: Dict[str, str] = Field(default_factory=dict)
-    artifact_uri: Optional[str] = None
+    metrics: dict[str, float] = Field(default_factory=dict)
+    parameters: dict[str, str] = Field(default_factory=dict)
+    artifact_uri: str | None = None
 
 
 class DeploymentEvidence(BaseModel):
@@ -384,7 +384,7 @@ class DeploymentEvidence(BaseModel):
     replicas_ready: int
     health_status: str
     recent_restarts: int
-    unhealthy_pods: List[str] = Field(default_factory=list)
+    unhealthy_pods: list[str] = Field(default_factory=list)
 
 
 class DiagnosisEvidence(BaseModel):
@@ -392,8 +392,8 @@ class DiagnosisEvidence(BaseModel):
     layer: DiagnosisLayer
     summary: str
     root_cause: str
-    evidence_snippets: List[str] = Field(default_factory=list)
-    recommended_actions: List[str] = Field(default_factory=list)
+    evidence_snippets: list[str] = Field(default_factory=list)
+    recommended_actions: list[str] = Field(default_factory=list)
 
 
 # ============================================================================
@@ -412,21 +412,21 @@ class AgentResponse(BaseModel):
     summary: str
 
     # Grounded evidence objects
-    provenance: Optional[ProvenanceEvidence] = None
-    metrics: Optional[List[MetricEvidence]] = None
-    deployment: Optional[DeploymentEvidence] = None
-    diagnosis: Optional[DiagnosisEvidence] = None
+    provenance: ProvenanceEvidence | None = None
+    metrics: list[MetricEvidence] | None = None
+    deployment: DeploymentEvidence | None = None
+    diagnosis: DiagnosisEvidence | None = None
 
     # Deliberate distinction between verified facts and uncertainties
-    facts: List[str] = Field(
+    facts: list[str] = Field(
         default_factory=list,
         description="Verified operational facts supported by tool responses"
     )
-    uncertainties: List[str] = Field(
+    uncertainties: list[str] = Field(
         default_factory=list,
         description="Uncertainties or unverified assumptions identified during analysis"
     )
-    recommendations: List[str] = Field(
+    recommendations: list[str] = Field(
         default_factory=list,
         description="Actionable next steps recommended for the engineer"
     )
@@ -436,13 +436,13 @@ class AgentResponse(BaseModel):
         RetrainingDecision.NOT_RECOMMENDED,
         description="Retraining decision grounded in freshness, quality gate, or degradation"
     )
-    retraining_reason: Optional[str] = Field(
+    retraining_reason: str | None = Field(
         None,
         description="Justification for why retraining is or is not recommended"
     )
 
     # Audit & telemetry
-    tool_executions: List[ToolExecutionResult] = Field(
+    tool_executions: list[ToolExecutionResult] = Field(
         default_factory=list,
         description="Audit log of all tools executed during this request"
     )

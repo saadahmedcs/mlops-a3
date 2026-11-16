@@ -11,9 +11,7 @@ Implements Task 1 requirements:
 
 from __future__ import annotations
 
-import os
 import subprocess
-from typing import Any, Dict, List, Optional
 
 from agent.logger import log_tool_execution, logger
 from agent.schemas import (
@@ -34,7 +32,7 @@ class DvcTools:
     def __init__(self, repo_path: str = ".") -> None:
         self.repo_path = repo_path
 
-    def _run_cmd(self, cmd: List[str]) -> subprocess.CompletedProcess[str]:
+    def _run_cmd(self, cmd: list[str]) -> subprocess.CompletedProcess[str]:
         """Run a shell command safely inside the repository path."""
         try:
             return subprocess.run(
@@ -62,7 +60,7 @@ class DvcTools:
         and detect if tracked data has uncommitted modifications.
         """
         git_commit = self._get_git_commit()
-        tracked: List[DvcDatasetInfo] = []
+        tracked: list[DvcDatasetInfo] = []
         has_changed = False
 
         # Attempt to run `dvc data status` or `dvc list` if DVC is initialized
@@ -70,15 +68,12 @@ class DvcTools:
         if dvc_status.returncode == 0:
             try:
                 import json
+
                 data = json.loads(dvc_status.stdout)
                 has_changed = bool(data.get("modified", []) or data.get("not_in_cache", []))
-            except Exception:
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError):
                 has_changed = False
 
-        # Check for dvc.yaml or .dvc files in the directory
-        data_file = os.path.join(self.repo_path, "data", "training_data.csv")
-        dvc_file = data_file + ".dvc"
-        
         # Build dataset info with reproducible metadata
         tracked.append(
             DvcDatasetInfo(

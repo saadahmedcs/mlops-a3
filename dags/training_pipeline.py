@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any
 
 # When running in standard Python or Airflow worker, safely handle imports
 try:
@@ -23,7 +23,7 @@ try:
 except ImportError:
     # Lightweight stub for testing when Airflow core is not installed locally
     class DAG:  # type: ignore
-        def __init__(self, dag_id: str, default_args: Dict[str, Any], **kwargs: Any) -> None:
+        def __init__(self, dag_id: str, default_args: dict[str, Any], **kwargs: Any) -> None:
             self.dag_id = dag_id
             self.default_args = default_args
 
@@ -39,7 +39,7 @@ except ImportError:
 logger = logging.getLogger("airflow.task")
 
 
-def validate_dataset(**context: Any) -> Dict[str, Any]:
+def validate_dataset(**context: Any) -> dict[str, Any]:
     """
     Stage 1: Verify DVC dataset presence, checksums, schema, and non-empty records.
     """
@@ -53,7 +53,7 @@ def validate_dataset(**context: Any) -> Dict[str, Any]:
     return {"dataset_version": dataset_version, "status": "VALIDATED"}
 
 
-def preprocess_data(**context: Any) -> Dict[str, Any]:
+def preprocess_data(**context: Any) -> dict[str, Any]:
     """
     Stage 2: Clean, impute missing values, scale features, and create train/test splits.
     """
@@ -61,7 +61,7 @@ def preprocess_data(**context: Any) -> Dict[str, Any]:
     return {"train_samples": 8000, "val_samples": 2000, "status": "PREPROCESSED"}
 
 
-def train_model(**context: Any) -> Dict[str, Any]:
+def train_model(**context: Any) -> dict[str, Any]:
     """
     Stage 3: Execute model training with configured hyperparameters.
     """
@@ -69,7 +69,7 @@ def train_model(**context: Any) -> Dict[str, Any]:
     return {"model_type": "xgboost", "n_estimators": 200, "learning_rate": 0.05}
 
 
-def evaluate_and_log_mlflow(**context: Any) -> Dict[str, Any]:
+def evaluate_and_log_mlflow(**context: Any) -> dict[str, Any]:
     """
     Stage 4: Compute evaluation metrics on validation set and log to MLflow tracking server.
     """
@@ -90,8 +90,7 @@ def apply_model_quality_gate(**context: Any) -> bool:
     Prevents promotion to model registry and deployment if metrics fall below threshold.
     """
     logger.info("Stage 5: Applying production model quality gate...")
-    ti = context.get("ti")
-    # In live airflow, fetch xcom; otherwise evaluate standard threshold
+    # In live airflow, fetch xcom from context["ti"]; otherwise evaluate standard threshold
     f1_score = 0.892
     min_threshold = 0.850
 

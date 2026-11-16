@@ -6,11 +6,11 @@ from __future__ import annotations
 
 import json
 import logging
+
 import pytest
 
 from agent.logger import (
     StructuredJsonFormatter,
-    get_request_id,
     log_tool_execution,
     redact_secrets,
     set_request_id,

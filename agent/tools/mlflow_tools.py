@@ -14,7 +14,7 @@ Implements Task 2 requirements:
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from agent.logger import log_tool_execution, logger
 from agent.schemas import (
@@ -30,9 +30,9 @@ from agent.schemas import (
 class MlflowTools:
     """Interface interacting with MLflow tracking server and model registry."""
 
-    def __init__(self, tracking_uri: Optional[str] = None) -> None:
+    def __init__(self, tracking_uri: str | None = None) -> None:
         self.tracking_uri = tracking_uri or os.getenv("MLFLOW_TRACKING_URI", "file:./mlruns")
-        self._client: Optional[Any] = None
+        self._client: Any | None = None
 
     def _get_client(self) -> Any:
         """Lazily initialize MlflowClient with fallback handling."""
@@ -43,7 +43,7 @@ class MlflowTools:
 
                 mlflow.set_tracking_uri(self.tracking_uri)
                 self._client = MlflowClient(tracking_uri=self.tracking_uri)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Could not connect to live MLflow server at {self.tracking_uri}: {e}")
                 self._client = None
         return self._client
@@ -95,7 +95,7 @@ class MlflowTools:
                                 + ("Meets production threshold (>=0.85)." if is_prod_ready else "Fails production threshold (>=0.85); retraining recommended.")
                             ),
                         )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Error querying live MLflow: {e}. Falling back to recorded experiment evidence.")
 
         # Reliable default/mock experiment runs conforming to the assignment scenario
@@ -136,7 +136,7 @@ class MlflowTools:
         """
         Compare two or more runs across key performance metrics and parameters.
         """
-        comparison_matrix: List[Dict[str, Any]] = [
+        comparison_matrix: list[dict[str, Any]] = [
             {
                 "run_id": "run_25_a4c92e1",
                 "f1_score": 0.892,

@@ -12,7 +12,7 @@ Implements Task 3 requirements:
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List, Optional
+
 import requests
 
 from agent.logger import log_tool_execution, logger
@@ -32,9 +32,9 @@ class AirflowTools:
 
     def __init__(
         self,
-        base_url: Optional[str] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        base_url: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
     ) -> None:
         self.base_url = (base_url or os.getenv("AIRFLOW_BASE_URL", "http://localhost:8080")).rstrip("/")
         self.auth = (
@@ -62,8 +62,8 @@ class AirflowTools:
                     # Query task instances for this run
                     tasks_endpoint = f"{self.base_url}/api/v1/dags/{params.dag_id}/dagRuns/{run_id}/taskInstances"
                     tasks_resp = requests.get(tasks_endpoint, auth=self.auth, timeout=3.0)
-                    failed_tasks: List[str] = []
-                    task_states: Dict[str, str] = {}
+                    failed_tasks: list[str] = []
+                    task_states: dict[str, str] = {}
                     if tasks_resp.status_code == 200:
                         t_data = tasks_resp.json().get("task_instances", [])
                         for t in t_data:
@@ -84,7 +84,7 @@ class AirflowTools:
                         task_states=task_states,
                         summary=f"DAG {params.dag_id} run {run_id} is in state '{state}' with {len(failed_tasks)} failed tasks.",
                     )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.info(f"Airflow API unreachable at {self.base_url} ({e}); returning recorded DAG state.")
 
         # Default mock baseline for training pipeline: all 5 stages succeeded
@@ -129,7 +129,7 @@ class AirflowTools:
                     execution_date=data.get("execution_date"),
                     message=f"Successfully triggered DAG '{params.dag_id}'.",
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.info(f"Airflow API unreachable for trigger: {e}. Executing mock trigger.")
 
         import uuid
@@ -148,9 +148,9 @@ class AirflowTools:
         Analyze a failed Airflow task execution and provide diagnostic logs and remediation.
         """
         log_snippet = (
-            f"[2026-11-16 19:42:01,114] {{quality_gate.py:48}} ERROR - QualityGateError: "
-            f"Candidate model F1 score 0.741 falls below production threshold of 0.850. "
-            f"Promotion blocked to prevent serving degraded model."
+            "[2026-11-16 19:42:01,114] {quality_gate.py:48} ERROR - QualityGateError: "
+            "Candidate model F1 score 0.741 falls below production threshold of 0.850. "
+            "Promotion blocked to prevent serving degraded model."
         )
 
         return AirflowTaskDiagnosticsOutput(
