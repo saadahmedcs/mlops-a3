@@ -1,0 +1,9 @@
+customer_id,tenure_months,monthly_charges,total_charges,contract_type,churn
+1001,12,65.5,786.0,month-to-month,0
+1002,48,89.0,4272.0,two-year,0
+1003,3,75.2,225.6,month-to-month,1
+1004,24,55.0,1320.0,one-year,0
+1005,6,95.0,570.0,month-to-month,1
+1006,36,70.0,2520.0,one-year,0
+1007,60,110.0,6600.0,two-year,0
+1008,1,45.0,45.0,month-to-month,1
